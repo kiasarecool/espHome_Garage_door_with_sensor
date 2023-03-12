@@ -1,0 +1,151 @@
+substitutions:
+    switch_name: "Chelsea Garage Button"
+    switch_name_2: "Nick Garage Button"
+  esphome:
+    name: chelsea-garage-door-opener
+  
+  esp8266:
+    board: nodemcuv2
+  
+  # Enable logging
+  logger:
+  
+  # Enable Home Assistant API
+  api:
+    encryption:
+      key: "----------------"
+  
+  ota:
+    password: "---------------"
+  
+  wifi:
+    ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  
+    # Enable fallback hotspot (captive portal) in case wifi connection fails
+    ap:
+      ssid: "Chelsea-Garage-Door-Opener"
+      password: ""
+  
+  captive_portal:
+  
+  
+  #binary_sensor:
+  #- platform: gpio
+  #  pin:
+  #    number: 14
+  #    mode: INPUT_PULLUP
+  #    inverted: False
+  #  name: "Chelsea Garage Door Sensor"
+  #  id: chelsea_garage_sensor
+  #  device_class: garage_door
+  #  filters:
+  #    - delayed_on: 30ms
+  #- platform: gpio
+  #  pin:
+  #    number: 5
+  #    mode: INPUT_PULLUP
+  #    inverted: False
+  #  name: "nick Garage Door Sensor"
+  #  id: nick_garage_sensor
+  #  device_class: garage_door
+  #  filters:
+  #    - delayed_on: 30ms
+  binary_sensor:
+    - platform: gpio
+      id: chels_sensor
+      pin: D8
+      filters:
+        invert: 
+    - platform: gpio
+      id: nick_sensor
+      name: "Nick Door Sensor"
+      pin: D7
+      filters:
+        invert: 
+  
+  
+  switch:
+    - platform: gpio
+      pin: 12
+      name: "${switch_name}"
+      id: chels_garage_button
+      internal: true
+    - platform: gpio
+      pin: 14
+      name: "${switch_name_2}"
+      id: nick_garage_button
+      internal: true
+  cover:
+    - platform: template
+      name: "Chelsea Garage Door"
+      lambda: !lambda |-
+        if (id(chels_sensor).state) {
+          return COVER_OPEN;
+        } else {
+          return COVER_CLOSED;
+        }
+      open_action:
+        # Cancel any previous action
+        - switch.turn_off: chels_garage_button
+        # Turn the switch on briefly
+        - switch.turn_on: chels_garage_button
+        - delay: 1000ms
+        - switch.turn_off: chels_garage_button
+      close_action:
+        # Cancel any previous action
+        - switch.turn_off: chels_garage_button
+        # Turn the switch on briefly
+        - switch.turn_on: chels_garage_button
+        - delay: 1000ms
+        - switch.turn_off: chels_garage_button
+      stop_action:
+        - switch.turn_on: chels_garage_button
+        - delay: 1000ms
+        - switch.turn_off: chels_garage_button
+      optimistic: true
+      assumed_state: false
+  
+    - platform: template
+      name: "Nick Garage Door"
+  #    lambda: !lambda |-
+  #      if (id(nick_sensor).state) {
+  #        return COVER_OPEN;
+  #      } else {
+  #        return COVER_CLOSED;
+  #      }
+      open_action:
+        # Cancel any previous action
+        - switch.turn_off: nick_garage_button
+        # Turn the switch on briefly
+        - switch.turn_on: nick_garage_button
+        - delay: 1s
+        - switch.turn_off: nick_garage_button
+      close_action:
+        # Cancel any previous action
+        - switch.turn_off: nick_garage_button
+        # Turn the switch on briefly
+        - switch.turn_on: nick_garage_button
+        - delay: 1s
+        - switch.turn_off: nick_garage_button
+      stop_action:
+        - switch.turn_on: nick_garage_button
+        - delay: 1s
+        - switch.turn_off: nick_garage_button
+      optimistic: true
+      assumed_state: false
+  button:
+    - platform: template
+      id: force_door_2
+      name: "Force Close Chelseas Garage"
+      on_press:
+        - switch.turn_on: chels_garage_button
+        - delay: 11s
+        - switch.turn_off: chels_garage_button
+    - platform: template
+      id: force_door_1
+      name: "Force Close Nicks Garage"
+      on_press:
+        - switch.turn_on: nick_garage_button
+        - delay: 11s
+        - switch.turn_off: nick_garage_button
